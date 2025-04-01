@@ -1,24 +1,43 @@
+package swing;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 public class HighlandsCoffee extends JFrame {
     private JTextField txtOrderId, txtDate, txtName, txtPhone, txtAddress, txtPoints, txtTotal, txtDiscount;
     private JTable table;
-    private JMenu menuBar;
+    private JMenuBar menuBar;
+    private JMenuItem quanli, order;
+    private JPanel leftPanel, customerPanel, orderPanel;
 
     public HighlandsCoffee() {
         setTitle("Highlands Coffee Management"); // Tiêu đề cửa sổ
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Đóng chương trình khi tắt cửa sổ
         setSize(800, 500);
         setLayout(new BorderLayout()); // Thiết lập layout chính
+
         // tinh nang exit
         JMenuBar menuBar = new JMenuBar();
         JMenu menuFeature = new JMenu("Tính năng");
-        JMenu menuExit = new JMenu("Exit");
+        JMenuItem quanli = new JMenuItem("Quản lí Khách hàng");
+        JMenuItem order = new JMenuItem("Order");
+        menuFeature.add(quanli);
+        menuFeature.add(order);
+
+        JButton btnExit = new JButton("Exit");
+        btnExit.setBorder(null);
+        btnExit.setContentAreaFilled(false);
+        btnExit.addActionListener(e -> System.exit(0));
         menuBar.add(menuFeature);
-        menuBar.add(menuExit);
-        // setMenuBar(menuBar);
+        menuBar.add(btnExit);
+
         add(menuBar, BorderLayout.NORTH);
 
         // Panel bên trái chứa thông tin hóa đơn và khách hàng
@@ -38,7 +57,7 @@ public class HighlandsCoffee extends JFrame {
         orderPanel.add(new JLabel("ID Hóa đơn:"), gbc);
         gbc.gridx = 1;
         txtOrderId = new JTextField(15);
-        txtOrderId.setText("Highlands1743079876861");
+        txtOrderId.setText(getIdOrder());
         orderPanel.add(txtOrderId, gbc);
 
         // Ngày
@@ -47,7 +66,7 @@ public class HighlandsCoffee extends JFrame {
         orderPanel.add(new JLabel("Ngày:"), gbc);
         gbc.gridx = 1;
         txtDate = new JTextField(15);
-        txtDate.setText("27/03/2025");
+        txtDate.setText(getCurrentDate());
         orderPanel.add(txtDate, gbc);
 
         // Panel thông tin khách hàng (đặt dưới panel hóa đơn)
@@ -90,6 +109,7 @@ public class HighlandsCoffee extends JFrame {
         JPanel buttonPanel = new JPanel();
         JButton btnSave = new JButton("Lưu");
         buttonPanel.add(btnSave);
+        btnSave.addActionListener(e -> checkout());
 
         // Thêm các panel vào panel bên trái
         leftPanel.add(orderPanel);
@@ -99,11 +119,11 @@ public class HighlandsCoffee extends JFrame {
         add(leftPanel, BorderLayout.WEST); // Đặt panel bên trái
 
         // Bảng chi tiết hóa đơn
-        String[] columns = { "ID", "Tên", "Kích cỡ", "Số lượng", "Giá", "Thành tiền", "Chú thích" };
+        String[] columns = {"ID", "Tên", "Kích cỡ", "Số lượng", "Giá", "Thành tiền", "Chú thích"};
         DefaultTableModel tableModel = new DefaultTableModel(columns, 0);
         table = new JTable(tableModel);
 
-        Object[] emptyRow = { "", "", "", "", "", "", "" };
+        Object[] emptyRow = {"", "", "", "", "", "", ""};
         tableModel.addRow(emptyRow);
 
         JScrollPane tableScrollPane = new JScrollPane(table);
@@ -135,5 +155,28 @@ public class HighlandsCoffee extends JFrame {
 
         setVisible(true);
     }
-}
 
+    private void checkout() {
+        String name = txtName.getText();
+        String phone = txtPhone.getText();
+        if (name.isEmpty() || phone.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập thêm thông tin! ");
+        }
+    }
+
+    private static String getCurrentDate() {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+        return formatter.format(new Date());
+    }
+
+    private static String getIdOrder() {
+        return "Highlands" + getCurrentDate()+ getCurrentTime();
+    }
+
+    private static String getCurrentTime() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HHmmss");
+        return LocalTime.now().format(formatter);
+
+    }
+
+}
