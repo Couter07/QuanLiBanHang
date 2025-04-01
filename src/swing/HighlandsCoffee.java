@@ -3,25 +3,33 @@ package swing;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HighlandsCoffee extends JFrame {
-    private JTextField txtOrderId, txtDate, txtName, txtPhone, txtAddress, txtPoints, txtTotal, txtDiscount;
+    private JTextField txtOrderId, txtDate, txtName, txtPhone, txtAddress, txtPoints, txtTotal, txtDiscount,txtTotalEmpty;
     private JTable table;
     private JMenuBar menuBar;
     private JMenuItem quanli, order;
     private JPanel leftPanel, customerPanel, orderPanel;
+    private DefaultTableModel tableModel;
+    private Menu menu; // Dùng class Menu
+
+
 
     public HighlandsCoffee() {
         setTitle("Highlands Coffee Management"); // Tiêu đề cửa sổ
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Đóng chương trình khi tắt cửa sổ
         setSize(800, 500);
         setLayout(new BorderLayout()); // Thiết lập layout chính
+        /// Khởi tạo menu món ăn
+        menu = new Menu();
 
         // tinh nang exit
         JMenuBar menuBar = new JMenuBar();
@@ -126,6 +134,27 @@ public class HighlandsCoffee extends JFrame {
         Object[] emptyRow = {"", "", "", "", "", "", ""};
         tableModel.addRow(emptyRow);
 
+        // Xử lý sự kiện nhập ID món ăn
+        table.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    int row = table.getSelectedRow();
+                    int column = table.getSelectedColumn();
+
+                    if (column == 0) { // Cột ID món ăn
+                        String id = (String) tableModel.getValueAt(row, 0);
+                        Menu.Food food = menu.getFoodById(id);
+
+                        if (food != null) {
+                            tableModel.setValueAt(food.name, row, 1); // Tên món ăn
+                            tableModel.setValueAt(food.description, row, 6); // Chú thích
+                        }
+                    }
+                }
+            }
+        });
+
         JScrollPane tableScrollPane = new JScrollPane(table);
         add(tableScrollPane, BorderLayout.CENTER);
 
@@ -140,10 +169,16 @@ public class HighlandsCoffee extends JFrame {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
         bottomPanel.add(new JLabel("Tổng:"));
-        txtTotal = new JTextField(20);
+        txtTotalEmpty = new JTextField(10);
+        txtTotalEmpty.setBackground(table.getBackground()); // Ô trống thêm vào
+        txtTotalEmpty.setBackground(table.getBackground()); // Ô trống thêm vào
+        txtTotalEmpty.setEditable(false);
+
+        txtTotal = new JTextField(10);
         txtTotal.setBackground(table.getBackground()); // Cài đặt màu nền giống bảng
         txtTotal.setEditable(false); // Chỉ hiển thị, không chỉnh sửa
         bottomPanel.add(txtTotal);
+        bottomPanel.add(txtTotalEmpty);
 
         bottomPanel.add(new JLabel("Khuyến mãi:"));
         txtDiscount = new JTextField(20);
@@ -178,5 +213,11 @@ public class HighlandsCoffee extends JFrame {
         return LocalTime.now().format(formatter);
 
     }
-
+    static class Food {
+        String name, description;
+        Food(String name, String description) {
+            this.name = name;
+            this.description = description;
+        }
+    }
 }
