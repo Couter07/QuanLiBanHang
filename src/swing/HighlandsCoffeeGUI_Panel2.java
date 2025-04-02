@@ -1,27 +1,30 @@
 package swing;
 
+import swing.Store;
+import swing.Customer;
+import swing.Order;
+import swing.OrderItem;
+import swing.Product;
+
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
+import javax.swing.JScrollPane;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
 public class HighlandsCoffeeGUI_Panel2 extends JPanel {
-
     private Store store;
-
     private JTable customerTable;
     private JTable orderTable;
-    private JTable orderItemTablePanel2;
+    private JTable orderItemTable;
     private JTextArea totalRevenueTextArea;
-
     private DefaultTableModel orderTableModel;
     private DecimalFormat currencyFormat = new DecimalFormat("#,###.##");
-
 
     public HighlandsCoffeeGUI_Panel2(Store store) {
         this.store = store;
@@ -51,22 +54,18 @@ public class HighlandsCoffeeGUI_Panel2 extends JPanel {
 
         add(mainContentPanel, BorderLayout.CENTER);
 
-        // Init customer
+        // Initialize Data (should be called by the main GUI)
         customerTable.setRowSelectionAllowed(true);
 
-        // Customer selected will trigger change on Order List
-        customerTable.getSelectionModel().addListSelectionListener(this::onCustomerSelected);
+        // Init customer selection listener (should be set by the main GUI)
+    }
 
-        // Add listener to orderTable for order detail
-        orderTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int selectedRow = orderTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    String orderId = (String) orderTable.getValueAt(selectedRow, 0);
-                    updateOrderItemTablePanel2(orderId);
-                }
-            }
-        });
+    public void addCustomerSelectionListener(ListSelectionListener listener) {
+        customerTable.getSelectionModel().addListSelectionListener(listener);
+    }
+
+    public void addOrderSelectionListener(ListSelectionListener listener) {
+        orderTable.getSelectionModel().addListSelectionListener(listener);
     }
 
     private JPanel createCustomerPanel() {
@@ -82,7 +81,7 @@ public class HighlandsCoffeeGUI_Panel2 extends JPanel {
             }
         };
         customerTable = new JTable(model);
-        styleTable(customerTable); // Apply style to customerTable
+        Main.styleTable(customerTable); // Apply style
         JScrollPane scrollPane = new JScrollPane(customerTable);
         panel.add(scrollPane, BorderLayout.CENTER);
         scrollPane.setPreferredSize(new Dimension(300, 550));
@@ -103,7 +102,7 @@ public class HighlandsCoffeeGUI_Panel2 extends JPanel {
             }
         };
         orderTable = new JTable(orderTableModel);
-        styleTable(orderTable); // Apply style to orderTable
+        Main.styleTable(orderTable); // Apply style
         JScrollPane scrollPane = new JScrollPane(orderTable);
         panel.add(scrollPane, BorderLayout.CENTER);
         scrollPane.setPreferredSize(new Dimension(600, 275));
@@ -123,34 +122,14 @@ public class HighlandsCoffeeGUI_Panel2 extends JPanel {
                 return false;
             }
         };
-        orderItemTablePanel2 = new JTable(model);
-        styleTable(orderItemTablePanel2); // Apply style to orderItemTablePanel2
-        JScrollPane scrollPane = new JScrollPane(orderItemTablePanel2);
+        orderItemTable = new JTable(model);
+        Main.styleTable(orderItemTable); // Apply style
+        JScrollPane scrollPane = new JScrollPane(orderItemTable);
         panel.add(scrollPane, BorderLayout.CENTER);
         scrollPane.setPreferredSize(new Dimension(600, 275));
 
         return panel;
     }
-
-    // Method to style the JTable headers
-    private void styleTable(JTable table) {
-        JTableHeader header = table.getTableHeader();
-        header.setBackground(new Color(173, 216, 230)); // Light blue
-        header.setForeground(Color.BLACK);
-        header.setFont(new Font("Arial", Font.BOLD, 12));
-
-        // Center-align column headers
-        DefaultTableCellRenderer headerRenderer = (DefaultTableCellRenderer) header.getDefaultRenderer();
-        headerRenderer.setHorizontalAlignment(JLabel.CENTER);
-
-        // Set background color for the table cells
-        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer();
-        cellRenderer.setBackground(new Color(224, 242, 255)); // Softer blue
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(cellRenderer);
-        }
-    }
-
 
     private JPanel createRevenuePanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -162,54 +141,8 @@ public class HighlandsCoffeeGUI_Panel2 extends JPanel {
         return panel;
     }
 
-
-    private void onCustomerSelected(ListSelectionEvent e) {
-        if (!e.getValueIsAdjusting()) {
-            int selectedRow = customerTable.getSelectedRow();
-            if (selectedRow != -1) {
-                Customer selectedCustomer = store.getCustomers().get(selectedRow);
-                updateOrderTable(selectedCustomer);
-            }
-        }
-    }
-
-    public void selectLastAddedOrder() {
-        if (orderTable != null && orderTable.getRowCount() > 0) {
-            int lastRowIndex = orderTable.getRowCount() - 1;
-            orderTable.setRowSelectionInterval(lastRowIndex, lastRowIndex);
-            String orderId = (String) orderTable.getValueAt(lastRowIndex, 0);
-            updateOrderItemTablePanel2(orderId);
-        }
-    }
-
-    public void updateOrderItemTablePanel2(String orderId) {
-        Order order = store.getOrderById(orderId);
-        DefaultTableModel model = (DefaultTableModel) orderItemTablePanel2.getModel();
-        model.setRowCount(0); // Xóa dữ liệu cũ
-
-        if (order != null) {
-            for (OrderItem item : order.getItems()) {
-                Product product = item.getProduct();
-                double thanhTien = product.getPrice() * item.getQuantity();  // calculate thành tiền
-
-                Object[] rowData = {
-                        product.getIdProduct(),
-                        product.getName(),
-                        product.getSize(),
-                        item.getQuantity(),
-                        currencyFormat.format(product.getPrice()),
-                        currencyFormat.format(thanhTien),  // Add to rowData
-                        product.getNote()
-                };
-                model.addRow(rowData);
-            }
-        }
-    }
-
-    public void updateCustomerTable() {
-        List<Customer> customers = store.getCustomers();
+    public void updateCustomerTable(List<Customer> customers) {
         Object[][] data = new Object[customers.size()][2];
-
         for (int i = 0; i < customers.size(); i++) {
             Customer customer = customers.get(i);
             data[i][0] = customer.getName();
@@ -219,22 +152,9 @@ public class HighlandsCoffeeGUI_Panel2 extends JPanel {
         String[] columnNames = {"Tên", "Số điện thoại"};
         DefaultTableModel model = (DefaultTableModel) customerTable.getModel();
         model.setDataVector(data, columnNames);
-
-        if(customers.size() > 0){
-            customerTable.setRowSelectionInterval(0,0);
-            Customer firstCustomer = store.getCustomers().get(0);
-            updateOrderTable(firstCustomer);
-            if(store.getOrdersByCustomer(firstCustomer).size() > 0){
-                orderTable.setRowSelectionInterval(0,0);
-                String orderId = (String) orderTable.getValueAt(0, 0);
-                updateOrderItemTablePanel2(orderId);
-            }
-
-        }
     }
 
-    public void updateOrderTable(Customer customer) {
-        List<Order> orders = store.getOrdersByCustomer(customer);
+    public void updateOrderTable(List<Order> orders) {
         Object[][] data = new Object[orders.size()][3];
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
@@ -248,33 +168,44 @@ public class HighlandsCoffeeGUI_Panel2 extends JPanel {
         String[] columnNames = {"ID", "Ngày", "Tổng"};
         DefaultTableModel model = (DefaultTableModel) orderTable.getModel();
         model.setDataVector(data, columnNames);
-        // Select the first row if orders are available
         if (orders.size() > 0) {
             orderTable.setRowSelectionInterval(0, 0);
-            String orderId = (String) orderTable.getValueAt(0, 0);
-            updateOrderItemTablePanel2(orderId);
         } else {
-            // Clear the order item table if there are no orders for the customer
-            DefaultTableModel orderItemModel = (DefaultTableModel) orderItemTablePanel2.getModel();
+            DefaultTableModel orderItemModel = (DefaultTableModel) orderItemTable.getModel();
             orderItemModel.setRowCount(0);
         }
     }
 
+    public void updateOrderItemTable(List<OrderItem> orderItems) {
+        DefaultTableModel model = (DefaultTableModel) orderItemTable.getModel();
+        model.setRowCount(0); // Clear old data
 
-    public void updateRevenue() {
-        double totalRevenue = 0;
-        for (Order order : store.getOrders()) {
-            totalRevenue += order.getTotalPrice();
+        for (OrderItem item : orderItems) {
+            Product product = item.getProduct();
+            double thanhTien = product.getPrice() * item.getQuantity();
+
+            Object[] rowData = {
+                    product.getIdProduct(),
+                    product.getName(),
+                    product.getSize(),
+                    item.getQuantity(),
+                    currencyFormat.format(product.getPrice()),
+                    currencyFormat.format(thanhTien),
+                    product.getNote()
+            };
+            model.addRow(rowData);
         }
+    }
+
+    public void updateTotalRevenue(double totalRevenue) {
         totalRevenueTextArea.setText(currencyFormat.format(totalRevenue));
-
     }
 
-    public void setStore(Store store) {
-        this.store = store;
+    public JTable getCustomerTable() {
+        return customerTable;
     }
 
-    public Store getStore() {
-        return store;
+    public JTable getOrderTable() {
+        return orderTable;
     }
-}
+    }
