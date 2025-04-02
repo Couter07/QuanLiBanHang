@@ -1,14 +1,25 @@
 package swing;
 
+import swing.Store;
+import swing.Customer;
+import swing.Order;
+import swing.OrderItem;
+import swing.Product;
+
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.border.*;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
+import javax.swing.event.TableModelListener;
+import javax.swing.event.TableModelEvent;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -17,10 +28,9 @@ import java.util.Map;
 import java.util.Random;
 
 public class HighlandsCoffeeGUI_Panel1 extends JPanel {
-
     private Store store;
 
-    // Input Fields for New Order (GUI 1)
+    // Input Fields for New Order
     private JTextField orderIdField;
     private JTextField orderDateField;
     private JTextField customerNameField;
@@ -30,7 +40,7 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
     private JTextField promotionField;
     private JTextField totalField;
 
-    // Order Item Table Model for GUI 1
+    // Order Item Table Model
     private DefaultTableModel orderItemTableModel;
     private JTable orderItemTable;
 
@@ -39,9 +49,11 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
     private String[] productNames = {"Pancake", "CheeseCake", "MilkTea", "MatchaLatte"};
     private String[] productSizes = {"S", "M", "L"};
     private DecimalFormat currencyFormat = new DecimalFormat("#,###.##");
+    private Main mainGUI;
 
-    public HighlandsCoffeeGUI_Panel1(Store store) {
+    public HighlandsCoffeeGUI_Panel1(Store store, Main mainGUI) {
         this.store = store;
+        this.mainGUI = mainGUI;
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -68,32 +80,21 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
         add(leftPanel, BorderLayout.WEST);
         add(orderItemPanel, BorderLayout.CENTER);
         add(totalPricePanel, BorderLayout.SOUTH);
+
+        generateAndSetOrderId();
+        setDefaultDate();
     }
 
-    public void setDefaultDate() {
+    private void setDefaultDate() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
         orderDateField.setText(dateFormat.format(new Date()));
     }
 
-    public void generateAndSetOrderId() {
+    private void generateAndSetOrderId() {
         Random random = new Random();
         int randomNumber = random.nextInt(10000000);
         String newOrderId =  "HighlandsCoffee@" + randomNumber;
         orderIdField.setText(newOrderId);
-    }
-    public void resetInvoiceForm() {
-        customerNameField.setText("");
-        customerAddressField.setText("");
-        customerPhoneField.setText("");
-        customerLoyaltyPointsField.setText("");
-
-        orderItemTableModel.setRowCount(0);
-       orderItemTableModel.addRow(new Object[]{"", "", "", "", ""});
-
-        totalField.setText("");
-        promotionField.setText("");
-
-        System.out.println("Invoice form reset successfully.");
     }
 
     private JPanel createTotalPricePanel() {
@@ -105,7 +106,6 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
         totalField.setEditable(false);
 
         JLabel promotionLabel = new JLabel("Khuyến mãi (%):");
-        promotionField = new JTextField(10);
         promotionField = new JTextField(10);
         promotionField.setText("");
 
@@ -170,7 +170,7 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
         String[] columnNames = {"ID Sản phẩm", "Tên", "Kích cỡ", "Số lượng", "Giá", "Thành tiền", "Ghi chú"};
         orderItemTableModel = new DefaultTableModel(columnNames, 0);
         orderItemTable = new JTable(orderItemTableModel);
-        styleTable(orderItemTable); // Apply style to orderItemTable
+        Main.styleTable(orderItemTable); // Apply style
         orderItemTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
         // Add an empty row initially
@@ -223,7 +223,7 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
             }
         });
 
-        // Add ActionListener to the combo box
+        // Add ActionListener to the combo box for product name
         productNameComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -304,7 +304,6 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
 
     // Method to generate a product ID
     private String generateProductId(String productName) {
-        // Implement logic to generate a unique product ID (e.g., using a counter or random number)
         Random random = new Random();
         int randomNumber = random.nextInt(100000);
         return productName.substring(0, 3).toUpperCase() + randomNumber;
@@ -386,7 +385,7 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
                     try {
                         price = currencyFormat.parse(priceStr).doubleValue();
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog((Component) this, "Invalid price for product " + productName, "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Invalid price for product " + productName, "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     product = new Product(productId, productName, productSize, price, note);  // create a new product
@@ -398,7 +397,7 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
                 try {
                     qty = Integer.parseInt(quantityStr);
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog((Component) this, "Số lượng không hợp lệ cho sản phẩm " + product.getName(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Số lượng không hợp lệ cho sản phẩm " + product.getName(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 if (product != null) {
@@ -409,26 +408,18 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
             order.setTotalPrice(totalPrice);
             store.addOrder(order);
 
-            // Cập nhật bảng hóa đơn và chi tiết hóa đơn ở giao diện 2
-            if (getParent() instanceof HighlandsCoffeeGUI_Panel2) {
-                HighlandsCoffeeGUI_Panel2 parentPanel = (HighlandsCoffeeGUI_Panel2) getParent();
-                parentPanel.updateCustomerTable();
+            // Notify main GUI to update tables on Panel 2
+            mainGUI.updateCustomerTable();
+            mainGUI.updateOrderTable(customer);
+            mainGUI.updateRevenue();
+            mainGUI.selectLastAddedOrderPanel2();
 
-                Customer currentCustomer = store.getCustomerByPhone(customerPhone);
-
-                parentPanel.updateOrderTable(currentCustomer);  // Cập nhật bảng hóa đơn
-                parentPanel.updateRevenue(); // Cập nhật doanh thu
-
-                clearInputFields();
-                generateAndSetOrderId();
-                setDefaultDate();
-                parentPanel.selectLastAddedOrder(); // Chọn hóa đơn mới và cập nhật giao diện 2
-            } else {
-                System.out.println("Parent is not an instance of HighlandsCoffeeGUI_Panel2");
-            }
+            clearInputFields();
+            generateAndSetOrderId();
+            setDefaultDate();
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog((Component) this, "Error saving order: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error saving order: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -443,32 +434,9 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
         orderItemTableModel.addRow(new Object[]{"", "", "", "", "", "", ""});
     }
 
-    // Method to style the JTable headers
-    private void styleTable(JTable table) {
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-        JTableHeader header = table.getTableHeader();
-        header.setBackground(new Color(173, 216, 230)); // Light blue
-        header.setForeground(Color.BLACK);
-        header.setFont(new Font("Arial", Font.BOLD, 12));
-
-        // Center-align column headers
-        DefaultTableCellRenderer headerRenderer = (DefaultTableCellRenderer) header.getDefaultRenderer();
-        headerRenderer.setHorizontalAlignment(JLabel.CENTER);
-
-        // Set background color for the table cells
-        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer();
-        cellRenderer.setBackground(new Color(224, 242, 255)); // Softer blue
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(cellRenderer);
-        }
-    }
-
-    public void setStore(Store store) {
-        this.store = store;
-    }
-
-    public Store getStore() {
-        return store;
+    public void resetPanel() {
+        generateAndSetOrderId();
+        setDefaultDate();
+        clearInputFields();
     }
 }
