@@ -267,6 +267,7 @@ public class HighlandsCoffeeGUI_Panel2 extends JPanel {
             totalRevenue += order.getTotalPrice();
         }
         totalRevenueTextArea.setText(currencyFormat.format(totalRevenue));
+
     }
 
     public void setStore(Store store) {

@@ -44,6 +44,7 @@ public class Main extends JFrame {
         JMenuItem panel1MenuItem = new JMenuItem("Tạo hoá đơn mới");
         panel1MenuItem.addActionListener(e -> {
             cardLayout.show(mainPanel, "Panel1");
+            panel1.resetInvoiceForm();
             // Generate and set order ID and date when switching to Panel1
             panel1.generateAndSetOrderId();
             panel1.setDefaultDate();
