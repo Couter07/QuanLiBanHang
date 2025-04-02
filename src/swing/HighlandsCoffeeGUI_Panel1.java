@@ -81,6 +81,20 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
         String newOrderId =  "HighlandsCoffee@" + randomNumber;
         orderIdField.setText(newOrderId);
     }
+    public void resetInvoiceForm() {
+        customerNameField.setText("");
+        customerAddressField.setText("");
+        customerPhoneField.setText("");
+        customerLoyaltyPointsField.setText("");
+
+        orderItemTableModel.setRowCount(0);
+       orderItemTableModel.addRow(new Object[]{"", "", "", "", ""});
+
+        totalField.setText("");
+        promotionField.setText("");
+
+        System.out.println("Invoice form reset successfully.");
+    }
 
     private JPanel createTotalPricePanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -396,17 +410,22 @@ public class HighlandsCoffeeGUI_Panel1 extends JPanel {
             store.addOrder(order);
 
             // Cập nhật bảng hóa đơn và chi tiết hóa đơn ở giao diện 2
-            ((HighlandsCoffeeGUI_Panel2)getParent()).updateCustomerTable();
+            if (getParent() instanceof HighlandsCoffeeGUI_Panel2) {
+                HighlandsCoffeeGUI_Panel2 parentPanel = (HighlandsCoffeeGUI_Panel2) getParent();
+                parentPanel.updateCustomerTable();
 
-            Customer currentCustomer = store.getCustomerByPhone(customerPhone);
+                Customer currentCustomer = store.getCustomerByPhone(customerPhone);
 
-            ((HighlandsCoffeeGUI_Panel2)getParent()).updateOrderTable(currentCustomer);  // Cập nhật bảng hóa đơn
-            ((HighlandsCoffeeGUI_Panel2)getParent()).updateRevenue(); // Cập nhật doanh thu
+                parentPanel.updateOrderTable(currentCustomer);  // Cập nhật bảng hóa đơn
+                parentPanel.updateRevenue(); // Cập nhật doanh thu
 
-            clearInputFields();
-            generateAndSetOrderId();
-            setDefaultDate();
-            ((HighlandsCoffeeGUI_Panel2)getParent()).selectLastAddedOrder(); // Chọn hóa đơn mới và cập nhật giao diện 2
+                clearInputFields();
+                generateAndSetOrderId();
+                setDefaultDate();
+                parentPanel.selectLastAddedOrder(); // Chọn hóa đơn mới và cập nhật giao diện 2
+            } else {
+                System.out.println("Parent is not an instance of HighlandsCoffeeGUI_Panel2");
+            }
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog((Component) this, "Error saving order: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
